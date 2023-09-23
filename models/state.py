@@ -1,37 +1,35 @@
 #!/usr/bin/python3
-"""This is the state class"""
-from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String
+"""Defines the State class."""
+import models
+from os import getenv
+from models.base_model import Base
+from models.base_model import BaseModel
+from models.city import City
+from sqlalchemy import Column
+from sqlalchemy import String
 from sqlalchemy.orm import relationship
-from os import environ
 
 
 class State(BaseModel, Base):
-    """This is the class for State
-    Attributes:
-        __tablename__: name of MySQL table
-        name: input name
-    """
-    __tablename__ = 'states'
-    name = Column(String(128), nullable=False)
+    """Represents a state for a MySQL database.
 
-    if environ['HBNB_TYPE_STORAGE'] == 'db':
-        cities = relationship('City', cascade='all, delete', backref='state')
-    else:
+    Inherits from SQLAlchemy Base and links to the MySQL table states.
+
+    Attributes:
+        __tablename__ (str): The name of the MySQL table to store States.
+        name (sqlalchemy String): The name of the State.
+        cities (sqlalchemy relationship): The State-City relationship.
+    """
+    __tablename__ = "states"
+    name = Column(String(128), nullable=False)
+    cities = relationship("City",  backref="state", cascade="delete")
+
+    if getenv("HBNB_TYPE_STORAGE") != "db":
         @property
         def cities(self):
-            """Getter method for cities
-            Return: list of cities with state_id equal to self.id
-            """
-            from models import storage
-            from models.city import City
-            # return list of City objs in __objects
-            cities_dict = storage.all(City)
-            cities_list = []
-
-            # copy values from dict to list
-            for city in cities_dict.values():
+            """Get a list of all related City objects."""
+            city_list = []
+            for city in list(models.storage.all(City).values()):
                 if city.state_id == self.id:
-                    cities_list.append(city)
-
-            return cities_list
+                    city_list.append(city)
+            return city_list
